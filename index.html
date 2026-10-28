@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Cartão de Ponto</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: cartão de ponto — resumo do mês no topo, botão de bater ponto, e uma linha por dia como num cartão de relógio-ponto */
+:root{
+  --bg:#EDF1F0; --surface:#FFFFFF; --ink:#13221E; --muted:#5B6A66; --line:#D3DBD8;
+  --accent:#0E6B58; --accent-ink:#FFFFFF; --stamp:#B7791F; --stamp-bg:#FBF1DE; --hol:#B4372F; --hol-bg:#FBE7E5; --weekend:#F5F7F6;
+  --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1614; --surface:#16211E; --ink:#E4ECE9; --muted:#93A39E; --line:#2A3833;
+  --accent:#3DBE9E; --accent-ink:#06231C; --stamp:#F0B94A; --stamp-bg:#2E2614; --hol:#F08A80; --hol-bg:#3A1C1A; --weekend:#121C19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1614; --surface:#16211E; --ink:#E4ECE9; --muted:#93A39E; --line:#2A3833;
+  --accent:#3DBE9E; --accent-ink:#06231C; --stamp:#F0B94A; --stamp-bg:#2E2614; --hol:#F08A80; --hol-bg:#3A1C1A; --weekend:#121C19; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:2rem;letter-spacing:-.01em;margin:0;line-height:1;text-wrap:balance}
+.sub{color:var(--muted);font-size:.85rem;margin-top:4px}
+.month{display:flex;align-items:center;gap:6px}
+.month span{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:1.05rem;min-width:9.5em;text-align:center;text-transform:capitalize}
+button{font:inherit;color:inherit;cursor:pointer}
+.icon{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:1.1rem;line-height:1}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.net small{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;color:var(--muted);font-weight:600}
+.net strong{display:block;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:2.4rem;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--accent)}
+.net .hrs{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);margin-top:6px}
+.lines{display:flex;flex-direction:column;gap:4px;font-size:.88rem;min-width:0}
+.lines div{display:flex;justify-content:space-between;gap:10px}
+.lines dd,.lines dt{margin:0}
+.lines dt{color:var(--muted);min-width:0}
+.lines dd{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lines .neg dd{color:var(--hol)}
+.lines .tot{border-top:1px solid var(--line);padding-top:4px;margin-top:2px;font-weight:600}
+.lines .tot dt{color:var(--ink)}
+@media (max-width:520px){.summary{grid-template-columns:1fr}}
+
+.punch{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.punch button{flex:1 1 220px;border:0;border-radius:12px;padding:14px 18px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:1.1rem;letter-spacing:.01em}
+.punch .clock{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.head,.row{display:grid;grid-template-columns:44px minmax(0,1fr) 62px 36px;align-items:center;gap:8px;padding:6px 10px}
+.times{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;min-width:0}
+@media (max-width:560px){.times{grid-template-columns:1fr 1fr}}
+.alt{flex:0 1 auto!important;background:transparent!important;color:var(--accent)!important;border:1px solid var(--accent)!important;font-size:.95rem!important;padding:12px 14px!important}
+.head{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding-block:10px}
+.row{border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row.wk{background:var(--weekend)}
+.row.today{box-shadow:inset 3px 0 0 var(--accent)}
+.dia{display:flex;flex-direction:column;line-height:1.1}
+.dia b{font-family:var(--f-mono);font-size:1rem}
+.dia span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.row input[type=time]{width:100%;min-width:0;font-family:var(--f-mono);font-size:.95rem;padding:7px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.tot{font-family:var(--f-mono);font-size:.9rem;text-align:right;font-variant-numeric:tabular-nums;line-height:1.15}
+.tot small{display:block;font-size:.66rem;color:var(--stamp);white-space:nowrap}
+.tag{display:inline-block;font-size:.6rem;font-weight:600;padding:1px 5px;border-radius:5px;margin-top:2px;letter-spacing:.04em}
+.tag.sab{background:var(--stamp-bg);color:var(--stamp)}
+.tag.fer{background:var(--hol-bg);color:var(--hol)}
+.fbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;font-weight:700;font-size:.8rem;color:var(--muted)}
+.fbtn[aria-pressed="true"]{background:var(--hol);border-color:var(--hol);color:var(--surface)}
+.legend{font-size:.78rem;color:var(--muted)}
+
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+summary{padding:14px 18px;font-weight:600;cursor:pointer}
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:0 18px 18px}
+.cfg label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
+.cfg input{font-family:var(--f-mono);font-size:.95rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+.note{font-size:.8rem;color:var(--muted);max-width:65ch}
+.status{font-size:.75rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.punch button{transition:transform .1s}.punch button:active{transform:scale(.98)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Cartão de Ponto</h1>
+      <div class="sub">Bata os 4 horários do dia: entrada, saída e volta do almoço, e saída.</div>
+    </div>
+    <div class="month">
+      <button class="icon" id="prev" aria-label="Mês anterior">‹</button>
+      <span id="mlabel"></span>
+      <button class="icon" id="next" aria-label="Próximo mês">›</button>
+    </div>
+  </header>
+
+  <section class="summary" aria-label="Resumo do mês">
+    <div class="net">
+      <small>Salário líquido estimado</small>
+      <strong id="liq">R$ 0,00</strong>
+      <div class="hrs" id="hrs"></div>
+    </div>
+    <dl class="lines" id="lines"></dl>
+  </section>
+
+  <div class="punch">
+    <button id="punch">Bater entrada</button>
+    <span class="clock" id="clock"></span>
+  </div>
+
+  <div class="card" role="table" aria-label="Dias do mês">
+    <div class="head" role="row"><span>Dia</span><div class="times"><span>Entrada</span><span>Saída almoço</span><span>Volta almoço</span><span>Saída</span></div><span style="text-align:right">Horas</span><span title="Feriado">Fer.</span></div>
+    <div id="rows"></div>
+  </div>
+  <div class="legend">Toque em <b>F</b> para marcar feriado (100%). Sábado conta 60% e domingo 100%. Nos dias úteis, o que passar da jornada vira hora extra.</div>
+
+  <details id="cfgbox">
+    <summary>Configurações do salário</summary>
+    <div class="cfg">
+      <label>Salário base (R$)<input id="c_base" type="number" step="0.01" min="0" inputmode="decimal"></label>
+      <label>Divisor de horas/mês<input id="c_div" type="number" step="1" min="1"></label>
+      <label>Entrada padrão<input id="c_ent" type="time"></label>
+      <label>Saída almoço padrão<input id="c_sal" type="time"></label>
+      <label>Volta almoço padrão<input id="c_val" type="time"></label>
+      <label>Saída seg a qui<input id="c_ssq" type="time"></label>
+      <label>Saída sexta<input id="c_ssx" type="time"></label>
+      <label>Hora extra dia útil (%)<input id="c_he" type="number" step="1" min="0"></label>
+      <label>Sábado (%)<input id="c_sab" type="number" step="1" min="0"></label>
+      <label>Feriado / domingo (%)<input id="c_fer" type="number" step="1" min="0"></label>
+      <label>Dependentes (IR)<input id="c_dep" type="number" step="1" min="0"></label>
+    </div>
+    <p class="note" style="padding:0 18px 16px;margin:0">INSS calculado só sobre o salário base, pela tabela de 2026 (7,5% a 14%, teto R$ 8.475,55). IRRF sobre o total bruto, com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026. A jornada normal sai do horário padrão: hoje, 9h de segunda a quinta e 8h na sexta. O que passar disso vira hora extra.</p>
+  </details>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const DEF={base:2500,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,fer:100,dep:0};
+const KEYS=Object.keys(DEF);
+const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];return r};
+let cfg={...DEF};
+let days={};            // {"2026-10-28":{e:"08:00",s:"18:00",f:true}}
+let view=new Date(); view.setDate(1);
+let db=null, uid=null, unsubM=null, unsubC=null;
+
+const pad=n=>String(n).padStart(2,'0');
+const mkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1);
+const dkey=d=>mkey(d)+'-'+pad(d.getDate());
+const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
+const fmtH=m=>{m=Math.round(m);return Math.floor(m/60)+':'+pad(m%60)};
+
+/* ---------- storage ---------- */
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let chain=Promise.resolve(), tSave=null, tCfg=null;
+function saveMonth(){
+  const mk=mkey(view), body={dias:JSON.parse(JSON.stringify(days))};
+  lsSet('ponto-'+mk,body.dias);
+  if(!db) return;
+  clearTimeout(tSave);
+  tSave=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set(body)).then(()=>status('Salvo'),e=>status('Não foi possível salvar agora ('+(e&&e.code||'erro')+'). Seus dados ficam neste aparelho até a próxima tentativa.'))},500);
+}
+function saveCfg(){
+  lsSet('ponto-cfg',cfg);
+  if(!db) return;
+  clearTimeout(tCfg);
+  tCfg=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('config').set({...cfg})).catch(()=>{})},500);
+}
+function status(t){$('#status').textContent=t}
+
+function subscribe(){
+  if(!db) return;
+  unsubM&&unsubM();
+  const mk=mkey(view);
+  unsubM=db.collection('data/users/'+uid).doc('m-'+mk).onSnapshot(s=>{
+    if(mk!==mkey(view))return;
+    const d=s.exists?(s.data().dias||{}):null;
+    if(d===null){ if(Object.keys(days).length) saveMonth(); return; }
+    if(JSON.stringify(d)===JSON.stringify(days))return;
+    days=JSON.parse(JSON.stringify(d)); lsSet('ponto-'+mk,days); renderAll();
+  },()=>{});
+}
+
+/* ---------- cálculo ---------- */
+function dayCalc(dateObj,rec){
+  const r={work:0,norm:0,he:0,sab:0,fer:0};
+  if(!rec)return r;
+  const e=toMin(rec.e),a=toMin(rec.a),v=toMin(rec.v),s=toMin(rec.s);
+  const seg=(x,y)=>(x==null||y==null)?0:(y>=x?y-x:y+1440-x);
+  let w=0;
+  if(a!=null||v!=null){w=seg(e,a)+seg(v,s)}
+  else{w=seg(e,s);if(w>360)w-=lunchMin()}
+  r.work=Math.max(0,w);
+  const wd=dateObj.getDay();
+  if(rec.f||wd===0) r.fer=r.work;
+  else if(wd===6) r.sab=r.work;
+  else{const j=jornada(wd);r.norm=Math.min(r.work,j);r.he=Math.max(0,r.work-j)}
+  return r;
+}
+function lunchMin(){const x=toMin(cfg.val)-toMin(cfg.sal);return x>0?x:60}
+function jornada(wd){
+  const out=wd===5?cfg.ssx:cfg.ssq;
+  const j=(toMin(cfg.sal)-toMin(cfg.ent))+(toMin(out)-toMin(cfg.val));
+  return j>0?j:480;
+}
+function padrao(dt){return{e:cfg.ent,a:cfg.sal,v:cfg.val,s:dt.getDay()===5?cfg.ssx:cfg.ssq}}
+const kdate=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const isWk=dt=>{const w=dt.getDay();return w>=1&&w<=5};
+/* dia útil sem registro = horário padrão; {x:1} = dia apagado de propósito */
+function eff(dt,k){const r=days[k];if(!r)return isWk(dt)?padrao(dt):{};if(r.x)return{};return r}
+function own(k){if(!days[k]||days[k].x)days[k]=days[k]&&days[k].x?{}:{...eff(kdate(k),k)};return days[k]}
+function tidy(k){const r=days[k];if(r&&!r.e&&!r.a&&!r.v&&!r.s&&!r.f){if(isWk(kdate(k)))days[k]={x:1};else delete days[k]}}
+function inss(b){
+  const f=[[1621.00,.075],[2902.84,.09],[4354.27,.12],[8475.55,.14]];
+  let t=0,prev=0;for(const[lim,a]of f){if(b>prev){t+=(Math.min(b,lim)-prev)*a}prev=lim}
+  return Math.round(t*100)/100;
+}
+function irrf(bruto,inssV){
+  const legal=inssV+(Number(cfg.dep)||0)*189.59;
+  const base=bruto-Math.max(legal,607.20);
+  const tab=[[2428.80,0,0],[2826.65,.075,182.16],[3751.05,.15,394.16],[4664.68,.225,675.49],[Infinity,.275,908.73]];
+  let imp=0;for(const[l,a,d]of tab){if(base<=l){imp=base*a-d;break}}
+  imp=Math.max(0,imp);
+  if(bruto<=5000)return 0;
+  if(bruto<=7350)imp=Math.max(0,imp-(978.62-0.133145*bruto));
+  return Math.round(imp*100)/100;
+}
+function compute(){
+  const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate();
+  const t={work:0,he:0,sab:0,fer:0};
+  for(let d=1;d<=n;d++){const dt=new Date(y,m,d);const c=dayCalc(dt,eff(dt,dkey(dt)));t.work+=c.work;t.he+=c.he;t.sab+=c.sab;t.fer+=c.fer}
+  const base=Number(cfg.base)||0, hora=base/(Number(cfg.div)||220);
+  const vHe=t.he/60*hora*(1+cfg.he/100), vSab=t.sab/60*hora*(1+cfg.sab/100), vFer=t.fer/60*hora*(1+cfg.fer/100);
+  const bruto=base+vHe+vSab+vFer, vInss=inss(base), vIr=irrf(bruto,vInss);
+  return {t,hora,vHe,vSab,vFer,bruto,vInss,vIr,liq:bruto-vInss-vIr,base};
+}
+
+/* ---------- render ---------- */
+function renderSummary(){
+  const c=compute();
+  $('#liq').textContent=brl.format(c.liq);
+  $('#hrs').textContent=fmtH(c.t.work)+' trabalhadas · hora '+brl.format(c.hora);
+  const L=[['Salário base',c.base],
+    ['HE '+cfg.he+'% ('+fmtH(c.t.he)+')',c.vHe],
+    ['Sábado '+cfg.sab+'% ('+fmtH(c.t.sab)+')',c.vSab],
+    ['Feriado/dom. '+cfg.fer+'% ('+fmtH(c.t.fer)+')',c.vFer],
+    ['Bruto',c.bruto,'tot'],
+    ['INSS (sobre a base)',-c.vInss,'neg'],
+    ['IRRF',-c.vIr,'neg'],
+    ['Líquido',c.liq,'tot']];
+  $('#lines').innerHTML=L.map(([k,v,cl])=>`<div class="${cl||''}"><dt>${k}</dt><dd>${v<0?'− '+brl.format(-v):brl.format(v)}</dd></div>`).join('');
+}
+const WD=['dom','seg','ter','qua','qui','sex','sáb'];
+function renderRows(){
+  const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate(),tk=dkey(new Date());
+  let h='';
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m,d),k=dkey(dt),r=eff(dt,k),wd=dt.getDay();
+    h+=`<div class="row${wd===0||wd===6?' wk':''}${k===tk?' today':''}" data-k="${k}" role="row">
+      <div class="dia"><b>${pad(d)}</b><span>${WD[wd]}</span></div>
+      <div class="times">
+        <input type="time" data-f="e" id="e-${k}" aria-label="Entrada dia ${d}" value="${r.e||''}">
+        <input type="time" data-f="a" id="a-${k}" aria-label="Saída almoço dia ${d}" value="${r.a||''}">
+        <input type="time" data-f="v" id="v-${k}" aria-label="Volta almoço dia ${d}" value="${r.v||''}">
+        <input type="time" data-f="s" id="s-${k}" aria-label="Saída dia ${d}" value="${r.s||''}">
+      </div>
+      <div class="tot" id="t-${k}"></div>
+      <button class="fbtn" aria-label="Feriado dia ${d}" aria-pressed="${!!r.f}">F</button>
+    </div>`;
+  }
+  $('#rows').innerHTML=h;
+  for(let d=1;d<=n;d++)renderTot(new Date(y,m,d));
+}
+function renderTot(dt){
+  const k=dkey(dt),el=document.getElementById('t-'+k);if(!el)return;
+  const r=eff(dt,k),c=dayCalc(dt,r);
+  if(!c.work){el.innerHTML=r&&r.f?'<span class="tag fer">FERIADO</span>':'';return}
+  let extra='';
+  if(c.fer)extra=`<span class="tag fer">${cfg.fer}%</span>`;
+  else if(c.sab)extra=`<span class="tag sab">${cfg.sab}%</span>`;
+  else if(c.he)extra=`<small>+${fmtH(c.he)} HE</small>`;
+  el.innerHTML=fmtH(c.work)+extra;
+}
+function renderPunch(){
+  const r=days[dkey(new Date())]||{};
+  $('#punch').textContent=!r.e?'Bater entrada':!r.a?'Bater saída do almoço':!r.v?'Bater volta do almoço':!r.s?'Bater saída':'Atualizar saída';
+}
+function renderAll(){
+  $('#mlabel').textContent=view.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  renderRows();renderSummary();renderPunch();
+}
+function fillCfg(){
+  $('#c_base').value=cfg.base;$('#c_div').value=cfg.div;
+  $('#c_ent').value=cfg.ent;$('#c_sal').value=cfg.sal;$('#c_val').value=cfg.val;$('#c_ssq').value=cfg.ssq;$('#c_ssx').value=cfg.ssx;
+  $('#c_he').value=cfg.he;$('#c_sab').value=cfg.sab;$('#c_fer').value=cfg.fer;$('#c_dep').value=cfg.dep;
+}
+
+/* ---------- eventos ---------- */
+$('#rows').addEventListener('change',ev=>{
+  const row=ev.target.closest('.row');if(!row)return;
+  const f=ev.target.dataset.f;if(!f)return;
+  const k=row.dataset.k,r=own(k);
+  r[f]=ev.target.value;if(!r[f])delete r[f];
+  tidy(k);
+  const[y,m,d]=k.split('-').map(Number);renderTot(new Date(y,m-1,d));renderSummary();renderPunch();saveMonth();
+});
+$('#rows').addEventListener('click',ev=>{
+  const b=ev.target.closest('.fbtn');if(!b)return;
+  const k=b.closest('.row').dataset.k,r=own(k);
+  r.f=!r.f;b.setAttribute('aria-pressed',r.f);
+  tidy(k);
+  const[y,m,d]=k.split('-').map(Number);renderTot(new Date(y,m-1,d));renderSummary();saveMonth();
+});
+$('#punch').addEventListener('click',()=>{
+  const now=new Date();
+  if(mkey(view)!==mkey(now)){view=new Date(now.getFullYear(),now.getMonth(),1);loadMonth()}
+  const k=dkey(now),r=(days[k]&&!days[k].x)?days[k]:(days[k]={}),t=pad(now.getHours())+':'+pad(now.getMinutes());
+  const f=!r.e?'e':!r.a?'a':!r.v?'v':'s';r[f]=t;
+  renderAll();saveMonth();
+  const el=document.getElementById(f+'-'+k);el&&el.scrollIntoView({block:'center',behavior:'smooth'});
+});
+function loadMonth(){days=lsGet('ponto-'+mkey(view))||{};renderAll();subscribe()}
+$('#prev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);loadMonth()};
+$('#next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);loadMonth()};
+document.querySelector('.cfg').addEventListener('change',()=>{
+  cfg=pick({base:+$('#c_base').value||0,div:+$('#c_div').value||220,
+       ent:$('#c_ent').value,sal:$('#c_sal').value,val:$('#c_val').value,ssq:$('#c_ssq').value,ssx:$('#c_ssx').value,
+       he:+$('#c_he').value||0,sab:+$('#c_sab').value||0,fer:+$('#c_fer').value||0,dep:+$('#c_dep').value||0});
+  renderAll();saveCfg();
+});
+function tick(){const n=new Date();$('#clock').textContent='Agora '+pad(n.getHours())+':'+pad(n.getMinutes())}
+setInterval(tick,15000);tick();
+
+/* ---------- início ---------- */
+cfg=pick(lsGet('ponto-cfg'));
+if(!lsGet('ponto-cfg'))document.getElementById('cfgbox').open=true;
+fillCfg();loadMonth();
+status('Salvando só neste aparelho.');
+(async()=>{
+  if(!window.claude||!window.claude.use)return;
+  try{
+    const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);
+    const id=u?await u.id():null;
+    if(!d||!id)return;
+    db=d;uid=id;status('Seus registros ficam salvos na sua conta.');
+    const c=await db.collection('data/users/'+uid).doc('config').get();
+    if(c.exists){cfg=pick(c.data());lsSet('ponto-cfg',cfg);fillCfg();document.getElementById('cfgbox').open=false;renderAll()}
+    else if(lsGet('ponto-cfg'))saveCfg();
+    subscribe();
+  }catch(e){}
+})();
+})();
+</script>
+
+</body>
+</html>
