@@ -3,227 +3,377 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cartão de Ponto</title>
+<meta name="description" content="Cartão de ponto com cálculo de horas extras, sábado, domingo, feriado e salário líquido.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@500&display=swap">
+<meta name="theme-color" content="#0B6B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ponto">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='8' fill='%230B6B57'/%3E%3Ccircle cx='15' cy='15' r='8.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M15 10.5V15l3 2' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='8' fill='%230B6B57'/%3E%3Ccircle cx='15' cy='15' r='8.5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M15 10.5V15l3 2' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Cartão de Ponto</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: cartão de ponto — resumo do mês no topo, botão de bater ponto, e uma linha por dia como num cartão de relógio-ponto */
+/* Layout: painel de RH — barra fixa com o mês, 4 indicadores, depois duas colunas: registro do dia + lançamentos à esquerda, horas extras e holerite fixos à direita */
 :root{
-  --bg:#EDF1F0; --surface:#FFFFFF; --ink:#13221E; --muted:#5B6A66; --line:#D3DBD8;
-  --accent:#0E6B58; --accent-ink:#FFFFFF; --stamp:#B7791F; --stamp-bg:#FBF1DE; --hol:#B4372F; --hol-bg:#FBE7E5; --weekend:#F5F7F6;
-  --f-display:"Archivo","Arial Narrow",Arial,sans-serif;
-  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --bg:#F1F4F3; --surface:#FFFFFF; --surface-2:#F7F9F8; --ink:#101B18; --muted:#5A6864; --line:#DCE3E0;
+  --accent:#0B6B57; --accent-ink:#FFFFFF; --accent-soft:#E2F1EC;
+  --c-util:#0B6B57; --c-util-bg:#E2F1EC;
+  --c-sab:#9A5F0C; --c-sab-bg:#FBF0DC;
+  --c-dom:#3352B0; --c-dom-bg:#E6ECFB;
+  --c-fer:#B1352C; --c-fer-bg:#FBE6E3;
+  --neg:#B1352C;
+  --f-sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:12px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0E1614; --surface:#16211E; --ink:#E4ECE9; --muted:#93A39E; --line:#2A3833;
-  --accent:#3DBE9E; --accent-ink:#06231C; --stamp:#F0B94A; --stamp-bg:#2E2614; --hol:#F08A80; --hol-bg:#3A1C1A; --weekend:#121C19; color-scheme:dark}}
+  --bg:#0C1412; --surface:#141E1B; --surface-2:#18241F; --ink:#E3ECE8; --muted:#94A49F; --line:#26332F;
+  --accent:#3DBE9E; --accent-ink:#04201A; --accent-soft:#163A31;
+  --c-util:#3DBE9E; --c-util-bg:#163A31; --c-sab:#EDB24A; --c-sab-bg:#3A2C12;
+  --c-dom:#8FA8F2; --c-dom-bg:#1D2846; --c-fer:#F0877C; --c-fer-bg:#3D1C19; --neg:#F0877C; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0E1614; --surface:#16211E; --ink:#E4ECE9; --muted:#93A39E; --line:#2A3833;
-  --accent:#3DBE9E; --accent-ink:#06231C; --stamp:#F0B94A; --stamp-bg:#2E2614; --hol:#F08A80; --hol-bg:#3A1C1A; --weekend:#121C19; color-scheme:dark}
+  --bg:#0C1412; --surface:#141E1B; --surface-2:#18241F; --ink:#E3ECE8; --muted:#94A49F; --line:#26332F;
+  --accent:#3DBE9E; --accent-ink:#04201A; --accent-soft:#163A31;
+  --c-util:#3DBE9E; --c-util-bg:#163A31; --c-sab:#EDB24A; --c-sab-bg:#3A2C12;
+  --c-dom:#8FA8F2; --c-dom-bg:#1D2846; --c-fer:#F0877C; --c-fer-bg:#3D1C19; --neg:#F0877C; color-scheme:dark}
+
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
-.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-h1{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:2rem;letter-spacing:-.01em;margin:0;line-height:1;text-wrap:balance}
-.sub{color:var(--muted);font-size:.85rem;margin-top:4px}
-.month{display:flex;align-items:center;gap:6px}
-.month span{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:1.05rem;min-width:9.5em;text-align:center;text-transform:capitalize}
-button{font:inherit;color:inherit;cursor:pointer}
-.icon{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:1.1rem;line-height:1}
-button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.in{max-width:1120px;margin:0 auto}
 
-.summary{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.net small{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;color:var(--muted);font-weight:600}
-.net strong{display:block;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:2.4rem;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--accent)}
-.net .hrs{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);margin-top:6px}
-.lines{display:flex;flex-direction:column;gap:4px;font-size:.88rem;min-width:0}
-.lines div{display:flex;justify-content:space-between;gap:10px}
-.lines dd,.lines dt{margin:0}
-.lines dt{color:var(--muted);min-width:0}
-.lines dd{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
-.lines .neg dd{color:var(--hol)}
-.lines .tot{border-top:1px solid var(--line);padding-top:4px;margin-top:2px;font-weight:600}
-.lines .tot dt{color:var(--ink)}
-@media (max-width:520px){.summary{grid-template-columns:1fr}}
+/* barra superior */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{flex:none}
+.brand b{font-stretch:80%;font-weight:800;font-size:1.25rem;letter-spacing:-.01em;line-height:1}
+.brand small{display:block;color:var(--muted);font-size:.75rem;margin-top:2px}
+.month{display:flex;align-items:center;gap:4px}
+.month span{font-stretch:85%;font-weight:700;min-width:9.5em;text-align:center}
+.ib{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:1.1rem;line-height:1}
+.ib:hover{background:var(--surface-2)}
 
-.punch{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.punch button{flex:1 1 220px;border:0;border-radius:12px;padding:14px 18px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:1.1rem;letter-spacing:.01em}
-.punch .clock{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+main{padding-block:20px 56px}
+main .in{display:flex;flex-direction:column;gap:20px}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.head,.row{display:grid;grid-template-columns:44px minmax(0,1fr) 62px 36px;align-items:center;gap:8px;padding:6px 10px}
+/* indicadores */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.kpi small{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--muted)}
+.kpi strong{display:block;font-stretch:78%;font-weight:800;font-size:1.85rem;line-height:1.1;margin-top:4px;overflow-wrap:anywhere}
+.kpi span{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+.kpi.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.kpi.main small,.kpi.main span{color:var(--accent-ink);opacity:.82}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.kpi.main{grid-column:1/-1}.kpi.main strong{font-size:2.2rem}.kpi:not(.main) strong{font-size:1.45rem}}
+
+/* grade principal */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-areas:"hoje aside" "lanc aside";gap:20px;align-items:start}
+.a-hoje{grid-area:hoje}.a-lanc{grid-area:lanc}
+.aside{grid-area:aside;display:flex;flex-direction:column;gap:20px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px)}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hoje" "aside" "lanc"}.aside{position:static}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 16px 0;flex-wrap:wrap}
+.ph h2{margin:0;font-stretch:85%;font-weight:700;font-size:1.05rem;text-wrap:balance}
+.ph p{margin:0;font-size:.8rem;color:var(--muted)}
+.pb{padding:14px 16px 16px}
+
+/* registro de hoje */
+.today{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:stretch}
+.slot{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.slot small{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot b{display:block;font-family:var(--f-mono);font-weight:500;font-size:1.15rem;margin-top:2px}
+.slot.def b{color:var(--muted)}
+.slot.next{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.punch{border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-stretch:88%;font-size:1rem;padding:10px 18px;white-space:nowrap}
+.punch:hover{filter:brightness(1.07)}
+.hint{font-size:.78rem;color:var(--muted);margin-top:10px}
+@media (max-width:640px){.today{grid-template-columns:repeat(2,minmax(0,1fr))}.punch{grid-column:1/-1;padding:13px}}
+
+/* horas extras */
+.bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--surface-2);margin-bottom:12px}
+.bar i{display:block;height:100%}
+.ex{display:flex;flex-direction:column}
+.exr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.exr:first-child{padding-top:0}
+.exn{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0}
+.dot{width:10px;height:10px;border-radius:3px;flex:none}
+.pct{font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:5px}
+.exv{text-align:right;font-weight:700}
+.exd{font-size:.8rem;color:var(--muted)}
+.exd.r{text-align:right}
+.ext{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding-top:12px}
+.ext b{font-weight:700}
+.ext .big{font-stretch:80%;font-weight:800;font-size:1.4rem;text-align:right;color:var(--accent)}
+.t-util .dot,.bar .t-util{background:var(--c-util)} .t-util .pct{background:var(--c-util-bg);color:var(--c-util)}
+.t-sab .dot,.bar .t-sab{background:var(--c-sab)} .t-sab .pct{background:var(--c-sab-bg);color:var(--c-sab)}
+.t-dom .dot,.bar .t-dom{background:var(--c-dom)} .t-dom .pct{background:var(--c-dom-bg);color:var(--c-dom)}
+.t-fer .dot,.bar .t-fer{background:var(--c-fer)} .t-fer .pct{background:var(--c-fer-bg);color:var(--c-fer)}
+
+/* holerite */
+.hol{width:100%;border-collapse:collapse;font-size:.88rem}
+.hol th{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;text-align:left;padding:0 0 6px;border-bottom:1px solid var(--line)}
+.hol td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.hol .ref{color:var(--muted);text-align:right;padding-right:12px;white-space:nowrap}
+.hol .v{text-align:right;white-space:nowrap}
+.hol th.ref,.hol th.v{text-align:right}
+.hol .neg{color:var(--neg)}
+.hol tr.sub td{font-weight:700;border-bottom-color:var(--ink)}
+.hol tr.liq td{font-weight:800;font-size:1.05rem;border-bottom:0;padding-top:10px;color:var(--accent)}
+.note{font-size:.75rem;color:var(--muted);margin:10px 0 0;max-width:65ch}
+
+/* lançamentos */
+.tb{overflow:hidden}
+.th,.tr{display:grid;grid-template-columns:62px minmax(0,1fr) 150px 38px;gap:10px;align-items:center;padding:6px 16px}
+.th{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding-block:10px;border-bottom:1px solid var(--line);background:var(--surface-2)}
 .times{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;min-width:0}
-@media (max-width:560px){.times{grid-template-columns:1fr 1fr}}
-.alt{flex:0 1 auto!important;background:transparent!important;color:var(--accent)!important;border:1px solid var(--accent)!important;font-size:.95rem!important;padding:12px 14px!important}
-.head{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding-block:10px}
-.row{border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.row.wk{background:var(--weekend)}
-.row.today{box-shadow:inset 3px 0 0 var(--accent)}
-.dia{display:flex;flex-direction:column;line-height:1.1}
-.dia b{font-family:var(--f-mono);font-size:1rem}
-.dia span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.row input[type=time]{width:100%;min-width:0;font-family:var(--f-mono);font-size:.95rem;padding:7px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-.tot{font-family:var(--f-mono);font-size:.9rem;text-align:right;font-variant-numeric:tabular-nums;line-height:1.15}
-.tot small{display:block;font-size:.66rem;color:var(--stamp);white-space:nowrap}
-.tag{display:inline-block;font-size:.6rem;font-weight:600;padding:1px 5px;border-radius:5px;margin-top:2px;letter-spacing:.04em}
-.tag.sab{background:var(--stamp-bg);color:var(--stamp)}
-.tag.fer{background:var(--hol-bg);color:var(--hol)}
-.fbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;font-weight:700;font-size:.8rem;color:var(--muted)}
-.fbtn[aria-pressed="true"]{background:var(--hol);border-color:var(--hol);color:var(--surface)}
-.legend{font-size:.78rem;color:var(--muted)}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right}
+.tr{border-bottom:1px solid var(--line)}
+.tr:last-child{border-bottom:0}
+.tr.wk{background:var(--surface-2)}
+.tr.fer{background:var(--c-fer-bg)}
+.tr.hoje{box-shadow:inset 3px 0 0 var(--accent)}
+.d{display:flex;align-items:baseline;gap:6px}
+.d b{font-family:var(--f-mono);font-weight:500;font-size:1rem}
+.d span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tr input[type=time]{width:100%;min-width:0;font-family:var(--f-mono);font-size:.9rem;padding:6px 4px;border-radius:7px;border:1px solid var(--line);background:var(--surface);text-align:center}
+.tr input[type=time]:hover{border-color:var(--muted)}
+.wt{font-family:var(--f-mono);font-size:.88rem}
+.xt{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.xt b{font-family:var(--f-mono);font-weight:500;font-size:.88rem}
+.xt .pct{font-size:.62rem;margin-top:2px}
+.xt.none{color:var(--muted)}
+.fb{width:34px;height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:.75rem;color:var(--muted)}
+.fb[aria-pressed="true"]{background:var(--c-fer);border-color:var(--c-fer);color:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 16px;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+@media (max-width:640px){
+  .th{display:none}
+  .tr{grid-template-columns:44px minmax(0,1fr) 34px;grid-template-areas:"d t f" "d r f";row-gap:6px;padding:10px 12px}
+  .d{grid-area:d;flex-direction:column;gap:0;align-self:start}
+  .times{grid-area:t;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .res{grid-area:r;display:flex;justify-content:space-between;align-items:center;text-align:left}
+  .res .xt{flex-direction:row;gap:6px;align-items:center}
+  .fb{grid-area:f;align-self:start}
+}
+.lbl{display:none}
+@media (max-width:640px){.lbl{display:block;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}}
 
-details{background:var(--surface);border:1px solid var(--line);border-radius:14px}
-summary{padding:14px 18px;font-weight:600;cursor:pointer}
-.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:0 18px 18px}
-.cfg label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
-.cfg input{font-family:var(--f-mono);font-size:.95rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
-.note{font-size:.8rem;color:var(--muted);max-width:65ch}
-.status{font-size:.75rem;color:var(--muted)}
-@media (prefers-reduced-motion:no-preference){.punch button{transition:transform .1s}.punch button:active{transform:scale(.98)}}
+/* configurações */
+details.panel summary{padding:14px 16px;font-weight:700;font-stretch:85%;cursor:pointer;font-size:1.02rem}
+.cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:0 16px 16px}
+.cfg fieldset{grid-column:1/-1;border:0;padding:0;margin:4px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.cfg legend{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:0;margin-bottom:6px}
+.cfg label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted)}
+.cfg input{font-family:var(--f-mono);font-size:.95rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);width:100%}
+.bk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 16px 16px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;font-size:.88rem;font-weight:600;cursor:pointer;position:relative}
+.btn:hover{background:var(--surface-2)}
+.btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.msg{font-size:.8rem;color:var(--muted);flex-basis:100%}
+footer{font-size:.75rem;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:no-preference){.punch,.btn,.ib{transition:filter .15s,background .15s}}
 </style>
 
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Cartão de Ponto</h1>
-      <div class="sub">Bata os 4 horários do dia: entrada, saída e volta do almoço, e saída.</div>
+<header class="top gut">
+  <div class="in">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><circle cx="15" cy="15" r="8.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/><path d="M15 10.5V15l3 2" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round"/></svg>
+      <div><b>Cartão de Ponto</b><small id="store">Salvo neste navegador</small></div>
     </div>
-    <div class="month">
-      <button class="icon" id="prev" aria-label="Mês anterior">‹</button>
+    <nav class="month" aria-label="Mês">
+      <button class="ib" id="prev" aria-label="Mês anterior">‹</button>
       <span id="mlabel"></span>
-      <button class="icon" id="next" aria-label="Próximo mês">›</button>
-    </div>
-  </header>
+      <button class="ib" id="next" aria-label="Próximo mês">›</button>
+    </nav>
+  </div>
+</header>
 
-  <section class="summary" aria-label="Resumo do mês">
-    <div class="net">
-      <small>Salário líquido estimado</small>
-      <strong id="liq">R$ 0,00</strong>
-      <div class="hrs" id="hrs"></div>
-    </div>
-    <dl class="lines" id="lines"></dl>
+<main class="gut">
+<div class="in">
+
+  <section class="kpis" aria-label="Resumo do mês">
+    <div class="kpi main"><small>Líquido a receber</small><strong id="k-liq">R$ 0,00</strong><span id="k-liq-s"></span></div>
+    <div class="kpi"><small>Total bruto</small><strong id="k-bru">R$ 0,00</strong><span id="k-bru-s"></span></div>
+    <div class="kpi"><small>Horas trabalhadas</small><strong id="k-hrs">0:00</strong><span id="k-hrs-s"></span></div>
+    <div class="kpi"><small>Horas extras</small><strong id="k-ext">0:00</strong><span id="k-ext-s"></span></div>
   </section>
 
-  <div class="punch">
-    <button id="punch">Bater entrada</button>
-    <span class="clock" id="clock"></span>
+  <div class="grid">
+
+    <section class="panel a-hoje" aria-labelledby="h-hoje">
+      <div class="ph"><h2 id="h-hoje">Registro de hoje</h2><p id="hoje-d"></p></div>
+      <div class="pb">
+        <div class="today" id="today"></div>
+        <div class="hint" id="hoje-h"></div>
+      </div>
+    </section>
+
+    <aside class="aside">
+      <section class="panel" aria-labelledby="h-ext">
+        <div class="ph"><h2 id="h-ext">Horas extras do mês</h2><p>Hora normal <span id="hora"></span></p></div>
+        <div class="pb">
+          <div class="bar" id="bar" aria-hidden="true"></div>
+          <div class="ex" id="ex"></div>
+          <div class="ext" id="ext"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-hol">
+        <div class="ph"><h2 id="h-hol">Demonstrativo</h2><p id="hol-m"></p></div>
+        <div class="pb">
+          <table class="hol">
+            <thead><tr><th>Descrição</th><th class="ref">Ref.</th><th class="v">Valor</th></tr></thead>
+            <tbody id="hol"></tbody>
+          </table>
+          <p class="note">INSS calculado só sobre o salário base (tabela 2026). IRRF sobre o bruto, com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026. Valores estimados.</p>
+        </div>
+      </section>
+    </aside>
+
+    <section class="panel tb a-lanc" aria-labelledby="h-lanc">
+      <div class="ph" style="padding-bottom:12px"><h2 id="h-lanc">Lançamentos</h2><p>Dias úteis já vêm no horário padrão. Toque no horário para corrigir.</p></div>
+      <div class="th" aria-hidden="true">
+        <span>Dia</span>
+        <div class="times"><span>Entrada</span><span>Saída almoço</span><span>Volta almoço</span><span>Saída</span></div>
+        <div class="res"><span>Trabalhado</span><span>Extra</span></div>
+        <span>Fer.</span>
+      </div>
+      <div id="rows"></div>
+      <div class="legend">
+        <span class="t-util"><i class="dot"></i>Dia útil <b id="lg-util"></b></span>
+        <span class="t-sab"><i class="dot"></i>Sábado <b id="lg-sab"></b></span>
+        <span class="t-dom"><i class="dot"></i>Domingo <b id="lg-dom"></b></span>
+        <span class="t-fer"><i class="dot"></i>Feriado <b id="lg-fer"></b> · toque em F para marcar</span>
+      </div>
+    </section>
   </div>
 
-  <div class="card" role="table" aria-label="Dias do mês">
-    <div class="head" role="row"><span>Dia</span><div class="times"><span>Entrada</span><span>Saída almoço</span><span>Volta almoço</span><span>Saída</span></div><span style="text-align:right">Horas</span><span title="Feriado">Fer.</span></div>
-    <div id="rows"></div>
-  </div>
-  <div class="legend">Toque em <b>F</b> para marcar feriado (100%). Sábado conta 60% e domingo 100%. Nos dias úteis, o que passar da jornada vira hora extra.</div>
-
-  <details id="cfgbox">
-    <summary>Configurações do salário</summary>
+  <details class="panel" id="cfgbox">
+    <summary>Configurações e backup</summary>
     <div class="cfg">
-      <label>Salário base (R$)<input id="c_base" type="number" step="0.01" min="0" inputmode="decimal"></label>
-      <label>Divisor de horas/mês<input id="c_div" type="number" step="1" min="1"></label>
-      <label>Entrada padrão<input id="c_ent" type="time"></label>
-      <label>Saída almoço padrão<input id="c_sal" type="time"></label>
-      <label>Volta almoço padrão<input id="c_val" type="time"></label>
-      <label>Saída seg a qui<input id="c_ssq" type="time"></label>
-      <label>Saída sexta<input id="c_ssx" type="time"></label>
-      <label>Hora extra dia útil (%)<input id="c_he" type="number" step="1" min="0"></label>
-      <label>Sábado (%)<input id="c_sab" type="number" step="1" min="0"></label>
-      <label>Feriado / domingo (%)<input id="c_fer" type="number" step="1" min="0"></label>
-      <label>Dependentes (IR)<input id="c_dep" type="number" step="1" min="0"></label>
+      <fieldset><legend>Salário</legend>
+        <label>Salário base (R$)<input id="c_base" type="number" step="0.01" min="0" inputmode="decimal"></label>
+        <label>Divisor (horas/mês)<input id="c_div" type="number" step="1" min="1"></label>
+        <label>Dependentes no IR<input id="c_dep" type="number" step="1" min="0"></label>
+      </fieldset>
+      <fieldset><legend>Horário padrão</legend>
+        <label>Entrada<input id="c_ent" type="time"></label>
+        <label>Saída almoço<input id="c_sal" type="time"></label>
+        <label>Volta almoço<input id="c_val" type="time"></label>
+        <label>Saída seg a qui<input id="c_ssq" type="time"></label>
+        <label>Saída sexta<input id="c_ssx" type="time"></label>
+      </fieldset>
+      <fieldset><legend>Adicional de hora extra (%)</legend>
+        <label>Dia útil<input id="c_he" type="number" step="1" min="0"></label>
+        <label>Sábado<input id="c_sab" type="number" step="1" min="0"></label>
+        <label>Domingo<input id="c_dom" type="number" step="1" min="0"></label>
+        <label>Feriado<input id="c_fer" type="number" step="1" min="0"></label>
+      </fieldset>
     </div>
-    <p class="note" style="padding:0 18px 16px;margin:0">INSS calculado só sobre o salário base, pela tabela de 2026 (7,5% a 14%, teto R$ 8.475,55). IRRF sobre o total bruto, com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026. A jornada normal sai do horário padrão: hoje, 9h de segunda a quinta e 8h na sexta. O que passar disso vira hora extra.</p>
+    <div class="bk">
+      <button class="btn" id="bkSave">Baixar backup</button>
+      <label class="btn">Carregar backup<input id="bkLoad" type="file" accept=".json,application/json"></label>
+      <span class="msg" id="bkMsg">O backup é um arquivo com todas as suas horas e configurações. Baixe de vez em quando para não perder nada.</span>
+    </div>
   </details>
-  <div class="status" id="status"></div>
+
+  <footer>Os valores são uma estimativa. Confira sempre com o seu holerite.</footer>
 </div>
+</main>
 
 <script>
 (function(){
 const $=s=>document.querySelector(s);
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
-const DEF={base:2500,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,fer:100,dep:0};
+const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
+const DEF={base:2500,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,dom:100,fer:100,dep:0};
 const KEYS=Object.keys(DEF);
 const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];return r};
-let cfg={...DEF};
-let days={};            // {"2026-10-28":{e:"08:00",s:"18:00",f:true}}
-let view=new Date(); view.setDate(1);
-let db=null, uid=null, unsubM=null, unsubC=null;
+const CATS=[['util','Dia útil','he'],['sab','Sábado','sab'],['dom','Domingo','dom'],['fer','Feriado','fer']];
+const WD=['dom','seg','ter','qua','qui','sex','sáb'];
+const SLOTS=[['e','Entrada'],['a','Saída almoço'],['v','Volta almoço'],['s','Saída']];
+
+let cfg={...DEF}, days={}, view=new Date(); view.setDate(1);
+let db=null, uid=null, unsub=null;
 
 const pad=n=>String(n).padStart(2,'0');
 const mkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1);
 const dkey=d=>mkey(d)+'-'+pad(d.getDate());
+const kdate=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
 const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
 const fmtH=m=>{m=Math.round(m);return Math.floor(m/60)+':'+pad(m%60)};
+const isWk=dt=>{const w=dt.getDay();return w>=1&&w<=5};
+const nowT=()=>{const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())};
 
-/* ---------- storage ---------- */
+/* ---------- armazenamento ---------- */
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let chain=Promise.resolve(), tSave=null, tCfg=null;
 function saveMonth(){
-  const mk=mkey(view), body={dias:JSON.parse(JSON.stringify(days))};
-  lsSet('ponto-'+mk,body.dias);
-  if(!db) return;
+  const mk=mkey(view), dias=JSON.parse(JSON.stringify(days));
+  lsSet('ponto-'+mk,dias);
+  if(!db)return;
   clearTimeout(tSave);
-  tSave=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set(body)).then(()=>status('Salvo'),e=>status('Não foi possível salvar agora ('+(e&&e.code||'erro')+'). Seus dados ficam neste aparelho até a próxima tentativa.'))},500);
+  tSave=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set({dias})).then(()=>store('Salvo na sua conta'),()=>store('Salvo neste aparelho. A conta não respondeu agora.'))},500);
 }
 function saveCfg(){
   lsSet('ponto-cfg',cfg);
-  if(!db) return;
+  if(!db)return;
   clearTimeout(tCfg);
   tCfg=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('config').set({...cfg})).catch(()=>{})},500);
 }
-function status(t){$('#status').textContent=t}
-
+function store(t){$('#store').textContent=t}
 function subscribe(){
-  if(!db) return;
-  unsubM&&unsubM();
+  if(!db)return;
+  unsub&&unsub();
   const mk=mkey(view);
-  unsubM=db.collection('data/users/'+uid).doc('m-'+mk).onSnapshot(s=>{
+  unsub=db.collection('data/users/'+uid).doc('m-'+mk).onSnapshot(s=>{
     if(mk!==mkey(view))return;
-    const d=s.exists?(s.data().dias||{}):null;
-    if(d===null){ if(Object.keys(days).length) saveMonth(); return; }
+    if(!s.exists){if(Object.keys(days).length)saveMonth();return}
+    const d=s.data().dias||{};
     if(JSON.stringify(d)===JSON.stringify(days))return;
-    days=JSON.parse(JSON.stringify(d)); lsSet('ponto-'+mk,days); renderAll();
+    days=JSON.parse(JSON.stringify(d));lsSet('ponto-'+mk,days);renderAll();
   },()=>{});
 }
 
-/* ---------- cálculo ---------- */
-function dayCalc(dateObj,rec){
-  const r={work:0,norm:0,he:0,sab:0,fer:0};
+/* ---------- regras ---------- */
+function padrao(dt){return{e:cfg.ent,a:cfg.sal,v:cfg.val,s:dt.getDay()===5?cfg.ssx:cfg.ssq}}
+/* dia útil sem registro = horário padrão; {x:1} = dia apagado de propósito */
+function eff(dt,k){const r=days[k];if(!r)return isWk(dt)?padrao(dt):{};if(r.x)return{};return r}
+function own(k){if(!days[k]||days[k].x)days[k]=(days[k]&&days[k].x)?{}:{...eff(kdate(k),k)};return days[k]}
+function tidy(k){const r=days[k];if(r&&!r.e&&!r.a&&!r.v&&!r.s&&!r.f){if(isWk(kdate(k)))days[k]={x:1};else delete days[k]}}
+function lunchMin(){const x=toMin(cfg.val)-toMin(cfg.sal);return x>0?x:60}
+function jornada(wd){const out=wd===5?cfg.ssx:cfg.ssq;const j=(toMin(cfg.sal)-toMin(cfg.ent))+(toMin(out)-toMin(cfg.val));return j>0?j:480}
+
+function dayCalc(dt,rec){
+  const r={work:0,extra:0,cat:null};
+  const wd=dt.getDay();
+  r.cat=(rec&&rec.f)?'fer':wd===0?'dom':wd===6?'sab':'util';
   if(!rec)return r;
   const e=toMin(rec.e),a=toMin(rec.a),v=toMin(rec.v),s=toMin(rec.s);
   const seg=(x,y)=>(x==null||y==null)?0:(y>=x?y-x:y+1440-x);
-  let w=0;
-  if(a!=null||v!=null){w=seg(e,a)+seg(v,s)}
+  let w;
+  if(a!=null||v!=null)w=seg(e,a)+seg(v,s);
   else{w=seg(e,s);if(w>360)w-=lunchMin()}
   r.work=Math.max(0,w);
-  const wd=dateObj.getDay();
-  if(rec.f||wd===0) r.fer=r.work;
-  else if(wd===6) r.sab=r.work;
-  else{const j=jornada(wd);r.norm=Math.min(r.work,j);r.he=Math.max(0,r.work-j)}
+  r.extra=r.cat==='util'?Math.max(0,r.work-jornada(wd)):r.work;
   return r;
 }
-function lunchMin(){const x=toMin(cfg.val)-toMin(cfg.sal);return x>0?x:60}
-function jornada(wd){
-  const out=wd===5?cfg.ssx:cfg.ssq;
-  const j=(toMin(cfg.sal)-toMin(cfg.ent))+(toMin(out)-toMin(cfg.val));
-  return j>0?j:480;
-}
-function padrao(dt){return{e:cfg.ent,a:cfg.sal,v:cfg.val,s:dt.getDay()===5?cfg.ssx:cfg.ssq}}
-const kdate=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
-const isWk=dt=>{const w=dt.getDay();return w>=1&&w<=5};
-/* dia útil sem registro = horário padrão; {x:1} = dia apagado de propósito */
-function eff(dt,k){const r=days[k];if(!r)return isWk(dt)?padrao(dt):{};if(r.x)return{};return r}
-function own(k){if(!days[k]||days[k].x)days[k]=days[k]&&days[k].x?{}:{...eff(kdate(k),k)};return days[k]}
-function tidy(k){const r=days[k];if(r&&!r.e&&!r.a&&!r.v&&!r.s&&!r.f){if(isWk(kdate(k)))days[k]={x:1};else delete days[k]}}
 function inss(b){
   const f=[[1621.00,.075],[2902.84,.09],[4354.27,.12],[8475.55,.14]];
-  let t=0,prev=0;for(const[lim,a]of f){if(b>prev){t+=(Math.min(b,lim)-prev)*a}prev=lim}
+  let t=0,prev=0;for(const[lim,a]of f){if(b>prev)t+=(Math.min(b,lim)-prev)*a;prev=lim}
   return Math.round(t*100)/100;
 }
 function irrf(bruto,inssV){
@@ -238,130 +388,186 @@ function irrf(bruto,inssV){
 }
 function compute(){
   const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate();
-  const t={work:0,he:0,sab:0,fer:0};
-  for(let d=1;d<=n;d++){const dt=new Date(y,m,d);const c=dayCalc(dt,eff(dt,dkey(dt)));t.work+=c.work;t.he+=c.he;t.sab+=c.sab;t.fer+=c.fer}
-  const base=Number(cfg.base)||0, hora=base/(Number(cfg.div)||220);
-  const vHe=t.he/60*hora*(1+cfg.he/100), vSab=t.sab/60*hora*(1+cfg.sab/100), vFer=t.fer/60*hora*(1+cfg.fer/100);
-  const bruto=base+vHe+vSab+vFer, vInss=inss(base), vIr=irrf(bruto,vInss);
-  return {t,hora,vHe,vSab,vFer,bruto,vInss,vIr,liq:bruto-vInss-vIr,base};
+  const base=Number(cfg.base)||0,hora=base/(Number(cfg.div)||220);
+  const cats={};for(const[id,nome,key]of CATS){const p=Number(cfg[key])||0;cats[id]={id,nome,p,min:0,dias:0,vh:hora*(1+p/100),val:0}}
+  let work=0,dTrab=0,dExtra=0;
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m,d),c=dayCalc(dt,eff(dt,dkey(dt)));
+    if(c.work>0){work+=c.work;dTrab++}
+    if(c.extra>0){cats[c.cat].min+=c.extra;cats[c.cat].dias++;dExtra++}
+  }
+  let exMin=0,exVal=0;
+  for(const c of Object.values(cats)){c.val=c.min/60*c.vh;exMin+=c.min;exVal+=c.val}
+  const bruto=base+exVal,vInss=inss(base),vIr=irrf(bruto,vInss);
+  return{base,hora,cats,work,dTrab,dExtra,exMin,exVal,bruto,vInss,vIr,liq:bruto-vInss-vIr};
 }
 
-/* ---------- render ---------- */
+/* ---------- tela ---------- */
 function renderSummary(){
   const c=compute();
-  $('#liq').textContent=brl.format(c.liq);
-  $('#hrs').textContent=fmtH(c.t.work)+' trabalhadas · hora '+brl.format(c.hora);
-  const L=[['Salário base',c.base],
-    ['HE '+cfg.he+'% ('+fmtH(c.t.he)+')',c.vHe],
-    ['Sábado '+cfg.sab+'% ('+fmtH(c.t.sab)+')',c.vSab],
-    ['Feriado/dom. '+cfg.fer+'% ('+fmtH(c.t.fer)+')',c.vFer],
-    ['Bruto',c.bruto,'tot'],
-    ['INSS (sobre a base)',-c.vInss,'neg'],
-    ['IRRF',-c.vIr,'neg'],
-    ['Líquido',c.liq,'tot']];
-  $('#lines').innerHTML=L.map(([k,v,cl])=>`<div class="${cl||''}"><dt>${k}</dt><dd>${v<0?'− '+brl.format(-v):brl.format(v)}</dd></div>`).join('');
-}
-const WD=['dom','seg','ter','qua','qui','sex','sáb'];
-function renderRows(){
-  const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate(),tk=dkey(new Date());
-  let h='';
-  for(let d=1;d<=n;d++){
-    const dt=new Date(y,m,d),k=dkey(dt),r=eff(dt,k),wd=dt.getDay();
-    h+=`<div class="row${wd===0||wd===6?' wk':''}${k===tk?' today':''}" data-k="${k}" role="row">
-      <div class="dia"><b>${pad(d)}</b><span>${WD[wd]}</span></div>
-      <div class="times">
-        <input type="time" data-f="e" id="e-${k}" aria-label="Entrada dia ${d}" value="${r.e||''}">
-        <input type="time" data-f="a" id="a-${k}" aria-label="Saída almoço dia ${d}" value="${r.a||''}">
-        <input type="time" data-f="v" id="v-${k}" aria-label="Volta almoço dia ${d}" value="${r.v||''}">
-        <input type="time" data-f="s" id="s-${k}" aria-label="Saída dia ${d}" value="${r.s||''}">
-      </div>
-      <div class="tot" id="t-${k}"></div>
-      <button class="fbtn" aria-label="Feriado dia ${d}" aria-pressed="${!!r.f}">F</button>
-    </div>`;
-  }
-  $('#rows').innerHTML=h;
-  for(let d=1;d<=n;d++)renderTot(new Date(y,m,d));
-}
-function renderTot(dt){
-  const k=dkey(dt),el=document.getElementById('t-'+k);if(!el)return;
-  const r=eff(dt,k),c=dayCalc(dt,r);
-  if(!c.work){el.innerHTML=r&&r.f?'<span class="tag fer">FERIADO</span>':'';return}
-  let extra='';
-  if(c.fer)extra=`<span class="tag fer">${cfg.fer}%</span>`;
-  else if(c.sab)extra=`<span class="tag sab">${cfg.sab}%</span>`;
-  else if(c.he)extra=`<small>+${fmtH(c.he)} HE</small>`;
-  el.innerHTML=fmtH(c.work)+extra;
-}
-function renderPunch(){
-  const r=days[dkey(new Date())]||{};
-  $('#punch').textContent=!r.e?'Bater entrada':!r.a?'Bater saída do almoço':!r.v?'Bater volta do almoço':!r.s?'Bater saída':'Atualizar saída';
-}
-function renderAll(){
-  $('#mlabel').textContent=view.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-  renderRows();renderSummary();renderPunch();
-}
-function fillCfg(){
-  $('#c_base').value=cfg.base;$('#c_div').value=cfg.div;
-  $('#c_ent').value=cfg.ent;$('#c_sal').value=cfg.sal;$('#c_val').value=cfg.val;$('#c_ssq').value=cfg.ssq;$('#c_ssx').value=cfg.ssx;
-  $('#c_he').value=cfg.he;$('#c_sab').value=cfg.sab;$('#c_fer').value=cfg.fer;$('#c_dep').value=cfg.dep;
+  $('#k-liq').textContent=brl.format(c.liq);
+  $('#k-liq-s').textContent='Descontos '+brl.format(c.vInss+c.vIr);
+  $('#k-bru').textContent=brl.format(c.bruto);
+  $('#k-bru-s').textContent='Base + '+brl.format(c.exVal)+' de extras';
+  $('#k-hrs').textContent=fmtH(c.work);
+  $('#k-hrs-s').textContent=c.dTrab+(c.dTrab===1?' dia trabalhado':' dias trabalhados');
+  $('#k-ext').textContent=fmtH(c.exMin);
+  $('#k-ext-s').textContent=brl.format(c.exVal)+' · '+c.dExtra+(c.dExtra===1?' dia':' dias');
+  $('#hora').textContent=brl.format(c.hora);
+
+  const L=Object.values(c.cats);
+  $('#bar').innerHTML=c.exMin?L.filter(x=>x.min).map(x=>`<i class="t-${x.id}" style="width:${(x.min/c.exMin*100).toFixed(2)}%"></i>`).join(''):'';
+  $('#ex').innerHTML=L.map(x=>`<div class="exr t-${x.id}">
+      <div class="exn"><i class="dot"></i>${x.nome}<span class="pct">+${num.format(x.p)}%</span></div>
+      <div class="exv">${brl.format(x.val)}</div>
+      <div class="exd">${x.dias} ${x.dias===1?'dia':'dias'} · ${fmtH(x.min)} h</div>
+      <div class="exd r">${brl.format(x.vh)}/h</div>
+    </div>`).join('');
+  $('#ext').innerHTML=`<b>Total de horas extras</b><div class="big">${brl.format(c.exVal)}</div>
+    <div class="exd">${fmtH(c.exMin)} h em ${c.dExtra} ${c.dExtra===1?'dia':'dias'}</div><div></div>`;
+
+  const ef=v=>c.base?num.format(v/c.base*100)+'%':'';
+  const rows=[['Salário base',(Number(cfg.div)||220)+' h',c.base]];
+  for(const x of L)if(x.min)rows.push(['Hora extra '+x.nome.toLowerCase()+' '+num.format(x.p)+'%',fmtH(x.min),x.val]);
+  let h=rows.map(([d,r,v])=>`<tr><td>${d}</td><td class="ref">${r}</td><td class="v">${brl.format(v)}</td></tr>`).join('');
+  h+=`<tr class="sub"><td>Total de proventos</td><td class="ref"></td><td class="v">${brl.format(c.bruto)}</td></tr>`;
+  h+=`<tr><td>INSS</td><td class="ref">${ef(c.vInss)}</td><td class="v neg">− ${brl.format(c.vInss)}</td></tr>`;
+  h+=`<tr><td>IRRF</td><td class="ref">${c.vIr?num.format(c.vIr/c.bruto*100)+'%':'isento'}</td><td class="v neg">− ${brl.format(c.vIr)}</td></tr>`;
+  h+=`<tr class="liq"><td>Líquido</td><td class="ref"></td><td class="v">${brl.format(c.liq)}</td></tr>`;
+  $('#hol').innerHTML=h;
+  for(const[id,,key]of CATS)$('#lg-'+id).textContent=num.format(Number(cfg[key])||0)+'%';
 }
 
-/* ---------- eventos ---------- */
+function rowHTML(dt){
+  const k=dkey(dt),r=eff(dt,k),wd=dt.getDay(),raw=days[k]||{};
+  const cls=['tr'];if(wd===0||wd===6)cls.push('wk');if(raw.f)cls.push('fer');if(k===dkey(new Date()))cls.push('hoje');
+  const inp=SLOTS.map(([f,l])=>`<label><span class="lbl">${l}</span><input type="time" data-f="${f}" id="${f}-${k}" aria-label="${l} dia ${dt.getDate()}" value="${r[f]||''}"></label>`).join('');
+  return `<div class="${cls.join(' ')}" data-k="${k}">
+    <div class="d"><b>${pad(dt.getDate())}</b><span>${WD[wd]}</span></div>
+    <div class="times">${inp}</div>
+    <div class="res" id="r-${k}">${resHTML(dt,r)}</div>
+    <button class="fb" aria-label="Feriado dia ${dt.getDate()}" aria-pressed="${!!raw.f}" title="Marcar feriado">F</button>
+  </div>`;
+}
+function resHTML(dt,r){
+  const c=dayCalc(dt,r);
+  const cat=CATS.find(x=>x[0]===c.cat);
+  const x=c.extra?`<div class="xt t-${c.cat}"><b>+${fmtH(c.extra)}</b><span class="pct">${num.format(Number(cfg[cat[2]])||0)}%</span></div>`
+    :`<div class="xt none"><b>—</b></div>`;
+  return `<span class="wt">${c.work?fmtH(c.work):'—'}</span>${x}`;
+}
+function renderRows(){
+  const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate();
+  let h='';for(let d=1;d<=n;d++)h+=rowHTML(new Date(y,m,d));
+  $('#rows').innerHTML=h;
+}
+function updateRow(k){
+  const dt=kdate(k),row=document.querySelector(`.tr[data-k="${k}"]`);if(!row)return;
+  const r=eff(dt,k),raw=days[k]||{};
+  for(const[f]of SLOTS){const i=document.getElementById(f+'-'+k);if(i&&i!==document.activeElement)i.value=r[f]||''}
+  row.classList.toggle('fer',!!raw.f);
+  row.querySelector('.fb').setAttribute('aria-pressed',!!raw.f);
+  document.getElementById('r-'+k).innerHTML=resHTML(dt,r);
+}
+function renderToday(){
+  const now=new Date(),k=dkey(now),r=eff(now,k),mine=days[k]&&!days[k].x?days[k]:null;
+  const nxt=mine?(SLOTS.find(([f])=>!mine[f])||['s'])[0]:'e';
+  $('#hoje-d').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  $('#today').innerHTML=SLOTS.map(([f,l])=>{
+    const isDef=!mine||!mine[f];
+    return `<div class="slot${isDef?' def':''}${f===nxt?' next':''}"><small>${l}</small><b>${r[f]||'--:--'}</b></div>`;
+  }).join('')+`<button class="punch" id="punch">Registrar ${SLOTS.find(s=>s[0]===nxt)[1].toLowerCase()} agora</button>`;
+  $('#hoje-h').textContent=mine?'Horários em cinza ainda são do padrão.':'Hoje está no horário padrão. Registre se o seu horário for diferente.';
+  $('#punch').onclick=punch;
+}
+function renderAll(){
+  const ml=view.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  $('#mlabel').textContent=ml.charAt(0).toUpperCase()+ml.slice(1);
+  $('#hol-m').textContent=ml;
+  renderRows();renderSummary();renderToday();
+}
+function fillCfg(){for(const k of KEYS){const el=document.getElementById('c_'+k);if(el)el.value=cfg[k]}}
+
+/* ---------- ações ---------- */
+function goToday(){const n=new Date();if(mkey(view)!==mkey(n)){view=new Date(n.getFullYear(),n.getMonth(),1);loadMonth()}}
+function punch(){
+  goToday();
+  const k=dkey(new Date());let r=days[k];
+  if(!r||r.x)r=days[k]={};
+  const f=(SLOTS.find(([f])=>!r[f])||['s'])[0];r[f]=nowT();
+  updateRow(k);renderSummary();renderToday();saveMonth();
+}
 $('#rows').addEventListener('change',ev=>{
-  const row=ev.target.closest('.row');if(!row)return;
   const f=ev.target.dataset.f;if(!f)return;
-  const k=row.dataset.k,r=own(k);
-  r[f]=ev.target.value;if(!r[f])delete r[f];
-  tidy(k);
-  const[y,m,d]=k.split('-').map(Number);renderTot(new Date(y,m-1,d));renderSummary();renderPunch();saveMonth();
+  const k=ev.target.closest('.tr').dataset.k,r=own(k);
+  r[f]=ev.target.value;if(!r[f])delete r[f];tidy(k);
+  updateRow(k);renderSummary();renderToday();saveMonth();
 });
 $('#rows').addEventListener('click',ev=>{
-  const b=ev.target.closest('.fbtn');if(!b)return;
-  const k=b.closest('.row').dataset.k,r=own(k);
-  r.f=!r.f;b.setAttribute('aria-pressed',r.f);
-  tidy(k);
-  const[y,m,d]=k.split('-').map(Number);renderTot(new Date(y,m-1,d));renderSummary();saveMonth();
-});
-$('#punch').addEventListener('click',()=>{
-  const now=new Date();
-  if(mkey(view)!==mkey(now)){view=new Date(now.getFullYear(),now.getMonth(),1);loadMonth()}
-  const k=dkey(now),r=(days[k]&&!days[k].x)?days[k]:(days[k]={}),t=pad(now.getHours())+':'+pad(now.getMinutes());
-  const f=!r.e?'e':!r.a?'a':!r.v?'v':'s';r[f]=t;
-  renderAll();saveMonth();
-  const el=document.getElementById(f+'-'+k);el&&el.scrollIntoView({block:'center',behavior:'smooth'});
+  const b=ev.target.closest('.fb');if(!b)return;
+  const k=b.closest('.tr').dataset.k,r=own(k);
+  r.f=!r.f;if(!r.f)delete r.f;tidy(k);
+  updateRow(k);renderSummary();saveMonth();
 });
 function loadMonth(){days=lsGet('ponto-'+mkey(view))||{};renderAll();subscribe()}
 $('#prev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);loadMonth()};
 $('#next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);loadMonth()};
 document.querySelector('.cfg').addEventListener('change',()=>{
-  cfg=pick({base:+$('#c_base').value||0,div:+$('#c_div').value||220,
-       ent:$('#c_ent').value,sal:$('#c_sal').value,val:$('#c_val').value,ssq:$('#c_ssq').value,ssx:$('#c_ssx').value,
-       he:+$('#c_he').value||0,sab:+$('#c_sab').value||0,fer:+$('#c_fer').value||0,dep:+$('#c_dep').value||0});
-  renderAll();saveCfg();
+  const o={};for(const k of KEYS){const el=document.getElementById('c_'+k);if(!el)continue;o[k]=el.type==='time'?el.value:(el.value===''?'':Number(el.value))}
+  cfg=pick(o);renderAll();saveCfg();
 });
-function tick(){const n=new Date();$('#clock').textContent='Agora '+pad(n.getHours())+':'+pad(n.getMinutes())}
-setInterval(tick,15000);tick();
+
+/* ---------- backup ---------- */
+function allData(){
+  const meses={};
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),m=/^ponto-(\d{4}-\d{2})$/.exec(k);if(m)meses[m[1]]=lsGet(k)}}catch(e){}
+  meses[mkey(view)]=JSON.parse(JSON.stringify(days));
+  return{app:'cartao-de-ponto',versao:2,gerado:new Date().toISOString(),config:cfg,meses};
+}
+$('#bkSave').addEventListener('click',async()=>{
+  const txt=JSON.stringify(allData(),null,1),n=new Date();
+  const name='ponto-backup-'+n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())+'.json';
+  const blob=new Blob([txt],{type:'application/json'});
+  let dl=null;
+  try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+  if(dl){try{await dl.save({filename:name,data:blob});$('#bkMsg').textContent='Backup baixado: '+name}catch(e){$('#bkMsg').textContent='O download foi cancelado.'}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  $('#bkMsg').textContent='Backup baixado: '+name+'. Guarde esse arquivo.';
+});
+$('#bkLoad').addEventListener('change',async ev=>{
+  const f=ev.target.files[0];ev.target.value='';if(!f)return;
+  let d=null;try{d=JSON.parse(await f.text())}catch(e){}
+  if(!d||d.app!=='cartao-de-ponto'||!d.meses){$('#bkMsg').textContent='Esse arquivo não é um backup do Cartão de Ponto. Escolha um arquivo ponto-backup-....json.';return}
+  if(d.config){cfg=pick(d.config);fillCfg();saveCfg()}
+  const ms=Object.keys(d.meses);
+  for(const mk of ms){
+    lsSet('ponto-'+mk,d.meses[mk]);
+    if(db)chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set({dias:d.meses[mk]})).catch(()=>{});
+  }
+  days=lsGet('ponto-'+mkey(view))||{};renderAll();
+  $('#bkMsg').textContent='Backup carregado: '+ms.length+(ms.length===1?' mês.':' meses.');
+});
 
 /* ---------- início ---------- */
 cfg=pick(lsGet('ponto-cfg'));
-if(!lsGet('ponto-cfg'))document.getElementById('cfgbox').open=true;
+if(!lsGet('ponto-cfg'))$('#cfgbox').open=true;
 fillCfg();loadMonth();
-status('Salvando só neste aparelho.');
+setInterval(()=>{const k=dkey(new Date());if(!document.querySelector(`.tr.hoje[data-k="${k}"]`)&&mkey(view)===mkey(new Date()))renderAll()},60000);
 (async()=>{
   if(!window.claude||!window.claude.use)return;
   try{
-    const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);
+    const[d,u]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
     const id=u?await u.id():null;
     if(!d||!id)return;
-    db=d;uid=id;status('Seus registros ficam salvos na sua conta.');
+    db=d;uid=id;store('Salvo na sua conta');
     const c=await db.collection('data/users/'+uid).doc('config').get();
-    if(c.exists){cfg=pick(c.data());lsSet('ponto-cfg',cfg);fillCfg();document.getElementById('cfgbox').open=false;renderAll()}
+    if(c.exists){cfg=pick(c.data());lsSet('ponto-cfg',cfg);fillCfg();$('#cfgbox').open=false;renderAll()}
     else if(lsGet('ponto-cfg'))saveCfg();
     subscribe();
   }catch(e){}
 })();
 })();
 </script>
-
 </body>
 </html>
