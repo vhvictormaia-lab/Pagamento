@@ -8,7 +8,7 @@ Site para registrar o ponto todo dia e calcular o salário do mês.
   - Dia útil: 50%
   - Sábado: 60%
   - Domingo: 100%
-  - Feriado: 100% (marque o dia no botão F)
+  - Feriado: 100% (feriados nacionais já vêm marcados; o botão F marca ou desmarca)
 - Demonstrativo no formato de holerite: proventos, INSS, IRRF e líquido
 - INSS calculado só sobre o salário base (tabela 2026)
 - IRRF com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026
