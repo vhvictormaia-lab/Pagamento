@@ -246,7 +246,7 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
     <summary>Configurações e backup</summary>
     <div class="cfg">
       <fieldset><legend>Salário</legend>
-        <label>Salário base (R$)<input id="c_base" type="number" step="0.01" min="0" inputmode="decimal"></label>
+        <label>Salário base (R$)<input id="c_base" type="text" inputmode="decimal" autocomplete="off" placeholder="1.621,00"></label>
         <label>Divisor (horas/mês)<input id="c_div" type="number" step="1" min="1"></label>
         <label>Dependentes no IR<input id="c_dep" type="number" step="1" min="0"></label>
       </fieldset>
@@ -280,9 +280,15 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
 const $=s=>document.querySelector(s);
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
-const DEF={base:1621,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,dom:100,fer:100,dep:0};
+const DEF={v:2,base:1621,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,dom:100,fer:100,dep:0};
 const KEYS=Object.keys(DEF);
-const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];if(Number(r.base)===2500)r.base=1621;return r};
+const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];r.v=2;return r};
+const migrate=o=>(o&&!o.v&&Number(o.base)===2500)?{...o,base:1621}:o;
+function parseBR(t){t=String(t||'').replace(/[^\d.,]/g,'');if(!t)return null;
+  if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
+  const n=parseFloat(t);return isFinite(n)?n:null}
+const money=n=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const CATS=[['util','Dia útil','he'],['sab','Sábado','sab'],['dom','Domingo','dom'],['fer','Feriado','fer']];
 const WD=['dom','seg','ter','qua','qui','sex','sáb'];
 const SLOTS=[['e','Entrada'],['a','Saída almoço'],['v','Volta almoço'],['s','Saída']];
@@ -301,13 +307,14 @@ const isWk=dt=>{const w=dt.getDay();return w>=1&&w<=5};
 /* ---------- armazenamento ---------- */
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let chain=Promise.resolve(), tSave=null, tCfg=null;
+let chain=Promise.resolve(), tSave=null, tCfg=null, pend=false, gen=0;
 function saveMonth(){
   const mk=mkey(view), dias=JSON.parse(JSON.stringify(days));
   lsSet('ponto-'+mk,dias);
   if(!db)return;
   clearTimeout(tSave);
-  tSave=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set({dias})).then(()=>store('Salvo na sua conta'),()=>store('Salvo neste aparelho. A conta não respondeu agora.'))},500);
+  pend=true;const g=++gen;
+  tSave=setTimeout(()=>{chain=chain.then(()=>db.collection('data/users/'+uid).doc('m-'+mk).set({dias}).finally(()=>{if(g===gen)pend=false})).then(()=>store('Salvo na sua conta'),()=>store('Salvo neste aparelho. A conta não respondeu agora.'))},500);
 }
 function saveCfg(){
   lsSet('ponto-cfg',cfg);
@@ -321,7 +328,7 @@ function subscribe(){
   unsub&&unsub();
   const mk=mkey(view);
   unsub=db.collection('data/users/'+uid).doc('m-'+mk).onSnapshot(s=>{
-    if(mk!==mkey(view))return;
+    if(mk!==mkey(view)||pend||s.metadata.hasPendingWrites)return;
     if(!s.exists){if(Object.keys(days).length)saveMonth();return}
     const d=s.data().dias||{};
     if(JSON.stringify(d)===JSON.stringify(days))return;
@@ -437,6 +444,7 @@ function resHTML(dt,r){
     :`<div class="xt none"><b>—</b></div>`;
   return `<span class="wt">${c.work?fmtH(c.work):'—'}</span>${x}`;
 }
+function refreshRows(){document.querySelectorAll('#rows .tr').forEach(r=>updateRow(r.dataset.k))}
 function renderRows(){
   const y=view.getFullYear(),m=view.getMonth(),n=new Date(y,m+1,0).getDate();
   let h='';for(let d=1;d<=n;d++)h+=rowHTML(new Date(y,m,d));
@@ -456,15 +464,18 @@ function renderAll(){
   $('#hol-m').textContent=ml;
   renderRows();renderSummary();
 }
-function fillCfg(){for(const k of KEYS){const el=document.getElementById('c_'+k);if(el)el.value=cfg[k]}}
+function fillCfg(){for(const k of KEYS){const el=document.getElementById('c_'+k);if(el&&el!==document.activeElement)el.value=k==='base'?money(cfg[k]):cfg[k]}}
 
 /* ---------- ações ---------- */
-$('#rows').addEventListener('change',ev=>{
+function onTime(ev){
   const f=ev.target.dataset.f;if(!f)return;
+  if(ev.type==='input'&&!ev.target.value)return;
   const k=ev.target.closest('.tr').dataset.k,r=own(k);
   r[f]=ev.target.value;if(!r[f])delete r[f];tidy(k);
   updateRow(k);renderSummary();saveMonth();
-});
+}
+$('#rows').addEventListener('input',onTime);
+$('#rows').addEventListener('change',onTime);
 $('#rows').addEventListener('click',ev=>{
   const b=ev.target.closest('.fb');if(!b)return;
   const k=b.closest('.tr').dataset.k,r=own(k);
@@ -474,10 +485,18 @@ $('#rows').addEventListener('click',ev=>{
 function loadMonth(){days=lsGet('ponto-'+mkey(view))||{};renderAll();subscribe()}
 $('#prev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);loadMonth()};
 $('#next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);loadMonth()};
-document.querySelector('.cfg').addEventListener('change',()=>{
-  const o={};for(const k of KEYS){const el=document.getElementById('c_'+k);if(!el)continue;o[k]=el.type==='time'?el.value:(el.value===''?'':Number(el.value))}
-  cfg=pick(o);renderAll();saveCfg();
-});
+let tIn=null;
+function readCfg(final){
+  const o={};for(const k of KEYS){const el=document.getElementById('c_'+k);if(!el)continue;
+    if(k==='base'){const n=parseBR(el.value);o[k]=n==null?'':n}
+    else o[k]=el.type==='time'?el.value:(el.value===''?'':Number(el.value))}
+  cfg=pick(o);renderSummary();
+  refreshRows();if(final)fillCfg();
+  saveCfg();
+}
+const cfgEl=document.querySelector('.cfg');
+cfgEl.addEventListener('input',()=>{clearTimeout(tIn);tIn=setTimeout(()=>readCfg(false),250)});
+cfgEl.addEventListener('change',()=>{clearTimeout(tIn);readCfg(true)});
 
 /* ---------- backup ---------- */
 function allData(){
@@ -512,7 +531,7 @@ $('#bkLoad').addEventListener('change',async ev=>{
 });
 
 /* ---------- início ---------- */
-cfg=pick(lsGet('ponto-cfg'));
+cfg=pick(migrate(lsGet('ponto-cfg')));
 if(!lsGet('ponto-cfg'))$('#cfgbox').open=true;
 fillCfg();loadMonth();
 setInterval(()=>{const k=dkey(new Date());if(!document.querySelector(`.tr.hoje[data-k="${k}"]`)&&mkey(view)===mkey(new Date()))renderAll()},60000);
@@ -524,7 +543,7 @@ setInterval(()=>{const k=dkey(new Date());if(!document.querySelector(`.tr.hoje[d
     if(!d||!id)return;
     db=d;uid=id;store('Salvo na sua conta');
     const c=await db.collection('data/users/'+uid).doc('config').get();
-    if(c.exists){cfg=pick(c.data());lsSet('ponto-cfg',cfg);fillCfg();$('#cfgbox').open=false;renderAll()}
+    if(c.exists){cfg=pick(migrate(c.data()));lsSet('ponto-cfg',cfg);fillCfg();$('#cfgbox').open=false;renderAll()}
     else if(lsGet('ponto-cfg'))saveCfg();
     subscribe();
   }catch(e){}
