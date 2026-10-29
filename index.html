@@ -119,6 +119,9 @@ main .in{display:flex;flex-direction:column;gap:20px}
 .hol .neg{color:var(--neg)}
 .hol tr.sub td{font-weight:700;border-bottom-color:var(--ink)}
 .hol tr.liq td{font-weight:800;font-size:1.05rem;border-bottom:0;padding-top:10px;color:var(--accent)}
+.fgts{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--surface-2);border:1px dashed var(--line);font-size:.85rem}
+.fgts small{display:block;font-size:.72rem;color:var(--muted)}
+.fgts b{white-space:nowrap}
 .note{font-size:.75rem;color:var(--muted);margin:10px 0 0;max-width:65ch}
 
 /* lançamentos */
@@ -221,7 +224,8 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
             <thead><tr><th>Descrição</th><th class="ref">Ref.</th><th class="v">Valor</th></tr></thead>
             <tbody id="hol"></tbody>
           </table>
-          <p class="note">INSS calculado só sobre o salário base (tabela 2026). IRRF sobre o bruto, com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026. Valores estimados.</p>
+          <div class="fgts"><div>FGTS do mês<small>Depositado pela empresa · não sai do seu salário</small></div><b id="fgts">R$ 0,00</b></div>
+          <p class="note">INSS e FGTS (8%) calculados sobre o salário base (tabela 2026). IRRF sobre o bruto, com a isenção até R$ 5.000 e o redutor até R$ 7.350 de 2026. Valores estimados.</p>
         </div>
       </section>
     </aside>
@@ -446,6 +450,7 @@ function renderSummary(){
   h+=`<tr><td>INSS</td><td class="ref">${ef(c.vInss)}</td><td class="v neg">− ${brl.format(c.vInss)}</td></tr>`;
   h+=`<tr><td>IRRF</td><td class="ref">${c.vIr?num.format(c.vIr/c.bruto*100)+'%':'isento'}</td><td class="v neg">− ${brl.format(c.vIr)}</td></tr>`;
   h+=`<tr class="liq"><td>Líquido</td><td class="ref"></td><td class="v">${brl.format(c.liq)}</td></tr>`;
+  $('#fgts').textContent=brl.format(Math.round(c.base*8)/100);
   $('#hol').innerHTML=h;
   for(const[id,,key]of CATS)$('#lg-'+id).textContent=num.format(Number(cfg[key])||0)+'%';
 }
