@@ -77,10 +77,10 @@ main .in{display:flex;flex-direction:column;gap:20px}
 @media (max-width:560px){.kpi.main{grid-column:1/-1}.kpi.main strong{font-size:2.2rem}.kpi:not(.main) strong{font-size:1.45rem}}
 
 /* grade principal */
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-areas:"hoje aside" "lanc aside";gap:20px;align-items:start}
-.a-hoje{grid-area:hoje}.a-lanc{grid-area:lanc}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-areas:"lanc aside";gap:20px;align-items:start}
+.a-lanc{grid-area:lanc}
 .aside{grid-area:aside;display:flex;flex-direction:column;gap:20px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 72px)}
-@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"hoje" "aside" "lanc"}.aside{position:static}}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"aside" "lanc"}.aside{position:static}}
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
 .ph{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:14px 16px 0;flex-wrap:wrap}
@@ -88,17 +88,6 @@ main .in{display:flex;flex-direction:column;gap:20px}
 .ph p{margin:0;font-size:.8rem;color:var(--muted)}
 .pb{padding:14px 16px 16px}
 
-/* registro de hoje */
-.today{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:stretch}
-.slot{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
-.slot small{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.slot b{display:block;font-family:var(--f-mono);font-weight:500;font-size:1.15rem;margin-top:2px}
-.slot.def b{color:var(--muted)}
-.slot.next{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.punch{border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-stretch:88%;font-size:1rem;padding:10px 18px;white-space:nowrap}
-.punch:hover{filter:brightness(1.07)}
-.hint{font-size:.78rem;color:var(--muted);margin-top:10px}
-@media (max-width:640px){.today{grid-template-columns:repeat(2,minmax(0,1fr))}.punch{grid-column:1/-1;padding:13px}}
 
 /* horas extras */
 .bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--surface-2);margin-bottom:12px}
@@ -183,7 +172,7 @@ details.panel summary{padding:14px 16px;font-weight:700;font-stretch:85%;cursor:
 .btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .msg{font-size:.8rem;color:var(--muted);flex-basis:100%}
 footer{font-size:.75rem;color:var(--muted);text-align:center}
-@media (prefers-reduced-motion:no-preference){.punch,.btn,.ib{transition:filter .15s,background .15s}}
+@media (prefers-reduced-motion:no-preference){.btn,.ib{transition:filter .15s,background .15s}}
 </style>
 
 <header class="top gut">
@@ -212,13 +201,6 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
 
   <div class="grid">
 
-    <section class="panel a-hoje" aria-labelledby="h-hoje">
-      <div class="ph"><h2 id="h-hoje">Registro de hoje</h2><p id="hoje-d"></p></div>
-      <div class="pb">
-        <div class="today" id="today"></div>
-        <div class="hint" id="hoje-h"></div>
-      </div>
-    </section>
 
     <aside class="aside">
       <section class="panel" aria-labelledby="h-ext">
@@ -315,7 +297,6 @@ const kdate=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
 const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
 const fmtH=m=>{m=Math.round(m);return Math.floor(m/60)+':'+pad(m%60)};
 const isWk=dt=>{const w=dt.getDay();return w>=1&&w<=5};
-const nowT=()=>{const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())};
 
 /* ---------- armazenamento ---------- */
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
@@ -469,39 +450,20 @@ function updateRow(k){
   row.querySelector('.fb').setAttribute('aria-pressed',!!raw.f);
   document.getElementById('r-'+k).innerHTML=resHTML(dt,r);
 }
-function renderToday(){
-  const now=new Date(),k=dkey(now),r=eff(now,k),mine=days[k]&&!days[k].x?days[k]:null;
-  const nxt=mine?(SLOTS.find(([f])=>!mine[f])||['s'])[0]:'e';
-  $('#hoje-d').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  $('#today').innerHTML=SLOTS.map(([f,l])=>{
-    const isDef=!mine||!mine[f];
-    return `<div class="slot${isDef?' def':''}${f===nxt?' next':''}"><small>${l}</small><b>${r[f]||'--:--'}</b></div>`;
-  }).join('')+`<button class="punch" id="punch">Registrar ${SLOTS.find(s=>s[0]===nxt)[1].toLowerCase()} agora</button>`;
-  $('#hoje-h').textContent=mine?'Horários em cinza ainda são do padrão.':'Hoje está no horário padrão. Registre se o seu horário for diferente.';
-  $('#punch').onclick=punch;
-}
 function renderAll(){
   const ml=view.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
   $('#mlabel').textContent=ml.charAt(0).toUpperCase()+ml.slice(1);
   $('#hol-m').textContent=ml;
-  renderRows();renderSummary();renderToday();
+  renderRows();renderSummary();
 }
 function fillCfg(){for(const k of KEYS){const el=document.getElementById('c_'+k);if(el)el.value=cfg[k]}}
 
 /* ---------- ações ---------- */
-function goToday(){const n=new Date();if(mkey(view)!==mkey(n)){view=new Date(n.getFullYear(),n.getMonth(),1);loadMonth()}}
-function punch(){
-  goToday();
-  const k=dkey(new Date());let r=days[k];
-  if(!r||r.x)r=days[k]={};
-  const f=(SLOTS.find(([f])=>!r[f])||['s'])[0];r[f]=nowT();
-  updateRow(k);renderSummary();renderToday();saveMonth();
-}
 $('#rows').addEventListener('change',ev=>{
   const f=ev.target.dataset.f;if(!f)return;
   const k=ev.target.closest('.tr').dataset.k,r=own(k);
   r[f]=ev.target.value;if(!r[f])delete r[f];tidy(k);
-  updateRow(k);renderSummary();renderToday();saveMonth();
+  updateRow(k);renderSummary();saveMonth();
 });
 $('#rows').addEventListener('click',ev=>{
   const b=ev.target.closest('.fb');if(!b)return;
