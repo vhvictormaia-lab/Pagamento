@@ -246,7 +246,7 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
     <summary>Configurações e backup</summary>
     <div class="cfg">
       <fieldset><legend>Salário</legend>
-        <label>Salário base (R$)<input id="c_base" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+        <label>Salário base (R$)<input id="c_base" type="text" inputmode="decimal" autocomplete="off" placeholder="Ex.: 3004,51"></label>
         <label>Divisor (horas/mês)<input id="c_div" type="number" step="1" min="1"></label>
         <label>Dependentes no IR<input id="c_dep" type="number" step="1" min="0"></label>
       </fieldset>
@@ -488,19 +488,13 @@ $('#next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);lo
 let tIn=null;
 function readCfg(final){
   const o={};for(const k of KEYS){const el=document.getElementById('c_'+k);if(!el)continue;
-    if(k==='base'){const dg=el.value.replace(/\D/g,'');o[k]=dg?parseInt(dg,10)/100:''}
+    if(k==='base'){const n=parseBR(el.value);o[k]=n==null?'':n}
     else o[k]=el.type==='time'?el.value:(el.value===''?'':Number(el.value))}
   cfg=pick(o);renderSummary();
   refreshRows();if(final)fillCfg();
   saveCfg();
 }
 const cfgEl=document.querySelector('.cfg');
-/* máscara de dinheiro: digita só números, os 2 últimos são centavos */
-$('#c_base').addEventListener('input',ev=>{
-  const el=ev.target,dg=el.value.replace(/\D/g,'').replace(/^0+/,'').slice(0,10);
-  el.value=money(dg?parseInt(dg,10)/100:0);
-  try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}
-});
 cfgEl.addEventListener('input',()=>{clearTimeout(tIn);tIn=setTimeout(()=>readCfg(false),250)});
 cfgEl.addEventListener('change',()=>{clearTimeout(tIn);readCfg(true)});
 
