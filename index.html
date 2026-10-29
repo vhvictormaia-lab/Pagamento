@@ -280,9 +280,9 @@ footer{font-size:.75rem;color:var(--muted);text-align:center}
 const $=s=>document.querySelector(s);
 const brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const num=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
-const DEF={base:2500,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,dom:100,fer:100,dep:0};
+const DEF={base:1621,div:220,ent:'08:00',sal:'11:30',val:'12:30',ssq:'18:00',ssx:'17:00',he:50,sab:60,dom:100,fer:100,dep:0};
 const KEYS=Object.keys(DEF);
-const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];return r};
+const pick=o=>{const r={...DEF};for(const k of KEYS)if(o&&o[k]!=null&&o[k]!=='')r[k]=o[k];if(Number(r.base)===2500)r.base=1621;return r};
 const CATS=[['util','Dia útil','he'],['sab','Sábado','sab'],['dom','Domingo','dom'],['fer','Feriado','fer']];
 const WD=['dom','seg','ter','qua','qui','sex','sáb'];
 const SLOTS=[['e','Entrada'],['a','Saída almoço'],['v','Volta almoço'],['s','Saída']];
